@@ -68,31 +68,34 @@ export default function DashboardLayout({
         className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? "block" : "hidden"}`}
       >
         <div
-          className="fixed inset-0 bg-gray-600 bg-opacity-75"
+          className="fixed inset-0 bg-black/50"
           onClick={() => setSidebarOpen(false)}
         />
-        <div className="relative flex flex-col w-64 bg-white h-full">
-          <div className="p-4 border-b flex justify-between items-center">
-            <h2 className="font-bold text-lg">Menu</h2>
-            <button onClick={() => setSidebarOpen(false)} className="p-1">
+        <div className="relative flex flex-col w-72 bg-white h-full shadow-xl">
+          <div className="p-5 border-b flex justify-between items-center">
+            <h2 className="font-semibold text-lg text-gray-900">Menu</h2>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-2 -mr-2 text-gray-500"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <a
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition ${
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition ${
                     isActive
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-blue-50 text-blue-800"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
-                  {item.name}
+                  <span className="font-medium">{item.name}</span>
                 </a>
               );
             })}
@@ -101,35 +104,35 @@ export default function DashboardLayout({
       </div>
 
       {/* Sidebar desktop */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex flex-col flex-1 bg-white border-r">
-          <div className="p-6 border-b">
-            <h1 className="text-xl font-bold text-blue-600">Gestion Gardes</h1>
+      <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-72 lg:flex-col">
+        <div className="flex flex-col flex-1 bg-white border-r border-gray-100">
+          <div className="p-6 pb-4">
+            <h1 className="text-xl font-bold text-blue-800">Garde Cotation</h1>
             <p className="text-sm text-gray-500 mt-1">{userName}</p>
           </div>
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 px-3 space-y-1">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <a
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition ${
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition ${
                     isActive
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
+                      ? "bg-blue-50 text-blue-800"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
-                  {item.name}
+                  <span className="font-medium">{item.name}</span>
                 </a>
               );
             })}
           </nav>
-          <div className="p-4 border-t">
+          <div className="p-4 border-t border-gray-100 mt-auto">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2 w-full rounded-lg text-red-600 hover:bg-red-50 transition"
+              className="flex items-center gap-3 px-4 py-2.5 w-full rounded-xl text-red-600 hover:bg-red-50 transition font-medium"
             >
               <LogOut className="w-5 h-5" />
               Déconnexion
@@ -139,16 +142,16 @@ export default function DashboardLayout({
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
-        <div className="sticky top-0 z-10 bg-white border-b lg:hidden">
+      <div className="lg:pl-72">
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100 lg:hidden">
           <div className="flex items-center justify-between p-4">
-            <h1 className="text-xl font-bold text-blue-600">Gestion Gardes</h1>
-            <button onClick={() => setSidebarOpen(true)} className="p-2">
-              <Menu className="w-6 h-6" />
+            <h1 className="text-xl font-bold text-blue-800">Garde Cotation</h1>
+            <button onClick={() => setSidebarOpen(true)} className="p-2 -mr-2">
+              <Menu className="w-6 h-6 text-gray-600" />
             </button>
           </div>
         </div>
-        <main className="p-6">{children}</main>
+        <main className="p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

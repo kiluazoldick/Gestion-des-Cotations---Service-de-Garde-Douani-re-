@@ -3,16 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
-import {
-  Users,
-  Plus,
-  Edit,
-  Trash2,
-  X,
-  Check,
-  CalendarOff,
-  AlertCircle,
-} from "lucide-react";
+import { Users, Plus, Edit, Trash2, X, Check, CalendarOff } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -133,19 +124,49 @@ export default function AgentsPage() {
   };
 
   const handleDelete = async (agent: Agent) => {
-    if (confirm(`Supprimer ${agent.prenom} ${agent.nom} ?`)) {
-      const { error } = await supabase
-        .from("agents")
-        .update({ actif: false })
-        .eq("id", agent.id);
-
-      if (error) {
-        toast.error("Erreur lors de la suppression");
-      } else {
-        toast.success("Agent supprimé");
-        loadAgents();
-      }
-    }
+    toast.custom(
+      (t) => (
+        <div
+          className={`${t.visible ? "animate-enter" : "animate-leave"} max-w-md w-full bg-white shadow-lg rounded-xl pointer-events-auto flex items-center justify-between p-4 gap-4`}
+        >
+          <div>
+            <p className="text-sm font-medium text-gray-900">
+              Supprimer {agent.prenom} {agent.nom} ?
+            </p>
+            <p className="text-xs text-gray-500">
+              Cette action est irréversible
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                const { error } = await supabase
+                  .from("agents")
+                  .update({ actif: false })
+                  .eq("id", agent.id);
+                if (error) {
+                  toast.error("Erreur lors de la suppression");
+                } else {
+                  toast.success("Agent supprimé");
+                  loadAgents();
+                }
+              }}
+              className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 5000 },
+    );
   };
 
   const handleAddIndisponibilite = async (e: React.FormEvent) => {
@@ -171,18 +192,51 @@ export default function AgentsPage() {
     }
   };
 
-  const handleRemoveIndisponibilite = async (indispoId: string) => {
-    const { error } = await supabase
-      .from("indisponibilites")
-      .delete()
-      .eq("id", indispoId);
-
-    if (error) {
-      toast.error("Erreur lors de la suppression");
-    } else {
-      toast.success("Indisponibilité supprimée");
-      loadIndisponibilites();
-    }
+  const handleRemoveIndisponibilite = async (
+    indispoId: string,
+    agentName: string,
+  ) => {
+    toast.custom(
+      (t) => (
+        <div
+          className={`${t.visible ? "animate-enter" : "animate-leave"} max-w-md w-full bg-white shadow-lg rounded-xl pointer-events-auto flex items-center justify-between p-4 gap-4`}
+        >
+          <div>
+            <p className="text-sm font-medium text-gray-900">
+              Supprimer cette indisponibilité ?
+            </p>
+            <p className="text-xs text-gray-500">Pour {agentName}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                const { error } = await supabase
+                  .from("indisponibilites")
+                  .delete()
+                  .eq("id", indispoId);
+                if (error) {
+                  toast.error("Erreur lors de la suppression");
+                } else {
+                  toast.success("Indisponibilité supprimée");
+                  loadIndisponibilites();
+                }
+              }}
+              className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+            >
+              Supprimer
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 5000 },
+    );
   };
 
   const openModal = (agent?: Agent) => {
@@ -207,7 +261,7 @@ export default function AgentsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-gray-900">
             Gestion des agents
           </h1>
           <p className="text-gray-500 mt-1">
@@ -216,7 +270,7 @@ export default function AgentsPage() {
         </div>
         <button
           onClick={() => openModal()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+          className="bg-blue-700 text-white px-4 py-2.5 rounded-xl hover:bg-blue-800 transition flex items-center gap-2 font-medium"
         >
           <Plus className="w-4 h-4" />
           Ajouter un agent
@@ -224,24 +278,24 @@ export default function AgentsPage() {
       </div>
 
       {/* Liste des agents */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left p-4 font-semibold text-gray-600">
+                <th className="text-left p-4 font-semibold text-gray-700">
                   Nom
                 </th>
-                <th className="text-left p-4 font-semibold text-gray-600">
+                <th className="text-left p-4 font-semibold text-gray-700">
                   Prénom
                 </th>
-                <th className="text-left p-4 font-semibold text-gray-600">
+                <th className="text-left p-4 font-semibold text-gray-700">
                   Email
                 </th>
-                <th className="text-left p-4 font-semibold text-gray-600">
+                <th className="text-left p-4 font-semibold text-gray-700">
                   Statut
                 </th>
-                <th className="text-left p-4 font-semibold text-gray-600">
+                <th className="text-left p-4 font-semibold text-gray-700">
                   Actions
                 </th>
               </tr>
@@ -251,26 +305,24 @@ export default function AgentsPage() {
                 .filter((a) => a.actif)
                 .map((agent) => {
                   const indisponible = isAgentIndisponible(agent.id);
-                  const agentIndispos = indisponibilites.filter(
-                    (i) => i.agent_id === agent.id,
-                  );
-
                   return (
                     <tr
                       key={agent.id}
-                      className="border-b hover:bg-gray-50 transition"
+                      className="border-b border-gray-50 hover:bg-gray-50/50 transition"
                     >
-                      <td className="p-4 font-medium">{agent.nom}</td>
-                      <td className="p-4">{agent.prenom}</td>
-                      <td className="p-4 text-gray-600">{agent.email}</td>
+                      <td className="p-4 font-medium text-gray-900">
+                        {agent.nom}
+                      </td>
+                      <td className="p-4 text-gray-700">{agent.prenom}</td>
+                      <td className="p-4 text-gray-500">{agent.email}</td>
                       <td className="p-4">
                         {indisponible ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
                             <CalendarOff className="w-3 h-3" />
                             Indisponible
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                             <Check className="w-3 h-3" />
                             Disponible
                           </span>
@@ -280,7 +332,7 @@ export default function AgentsPage() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => openModal(agent)}
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition"
+                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
@@ -289,13 +341,13 @@ export default function AgentsPage() {
                               setSelectedAgent(agent);
                               setShowIndispoModal(true);
                             }}
-                            className="p-1 text-orange-600 hover:bg-orange-50 rounded transition"
+                            className="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition"
                           >
                             <CalendarOff className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(agent)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded transition"
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -318,15 +370,15 @@ export default function AgentsPage() {
 
       {/* Modal Ajout/Modification Agent */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-xl font-bold text-gray-900">
                 {editingAgent ? "Modifier l'agent" : "Ajouter un agent"}
               </h2>
               <button
                 onClick={closeModal}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-gray-100 rounded-lg transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -342,7 +394,7 @@ export default function AgentsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, nom: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
                   required
                 />
               </div>
@@ -356,7 +408,7 @@ export default function AgentsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, prenom: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
                   required
                 />
               </div>
@@ -370,7 +422,7 @@ export default function AgentsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-gray-900"
                   required
                 />
               </div>
@@ -378,14 +430,14 @@ export default function AgentsPage() {
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition font-medium"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                  className="flex-1 bg-blue-700 text-white py-2.5 rounded-xl hover:bg-blue-800 transition font-medium"
                 >
                   {loading ? "Enregistrement..." : "Enregistrer"}
                 </button>
@@ -397,15 +449,15 @@ export default function AgentsPage() {
 
       {/* Modal Indisponibilité */}
       {showIndispoModal && selectedAgent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
             <div className="flex justify-between items-center mb-5">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-xl font-bold text-gray-900">
                 Indisponibilité - {selectedAgent.prenom} {selectedAgent.nom}
               </h2>
               <button
                 onClick={() => setShowIndispoModal(false)}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-gray-100 rounded-lg transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -414,7 +466,7 @@ export default function AgentsPage() {
             {/* Indisponibilités existantes */}
             {indisponibilites.filter((i) => i.agent_id === selectedAgent.id)
               .length > 0 && (
-              <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="mb-4 p-3 bg-gray-50 rounded-xl">
                 <p className="text-sm font-medium mb-2">
                   Indisponibilités en cours :
                 </p>
@@ -425,15 +477,20 @@ export default function AgentsPage() {
                       key={indispo.id}
                       className="flex justify-between items-center text-sm py-1"
                     >
-                      <span>
+                      <span className="text-gray-600">
                         {indispo.date_debut} → {indispo.date_fin}
                         {indispo.raison && ` (${indispo.raison})`}
                       </span>
                       <button
-                        onClick={() => handleRemoveIndisponibilite(indispo.id)}
-                        className="text-red-600 hover:text-red-700"
+                        onClick={() =>
+                          handleRemoveIndisponibilite(
+                            indispo.id,
+                            `${selectedAgent.prenom} ${selectedAgent.nom}`,
+                          )
+                        }
+                        className="text-red-600 hover:text-red-700 p-1"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ))}
@@ -454,7 +511,7 @@ export default function AgentsPage() {
                       date_debut: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900"
                   required
                 />
               </div>
@@ -468,7 +525,7 @@ export default function AgentsPage() {
                   onChange={(e) =>
                     setIndispoData({ ...indispoData, date_fin: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900"
                   required
                 />
               </div>
@@ -481,7 +538,7 @@ export default function AgentsPage() {
                   onChange={(e) =>
                     setIndispoData({ ...indispoData, raison: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 text-gray-900"
                 >
                   <option value="">Sélectionner une raison</option>
                   <option value="malade">Malade</option>
@@ -494,13 +551,13 @@ export default function AgentsPage() {
                 <button
                   type="button"
                   onClick={() => setShowIndispoModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+                  className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl hover:bg-gray-50 transition font-medium"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition"
+                  className="flex-1 bg-orange-600 text-white py-2.5 rounded-xl hover:bg-orange-700 transition font-medium"
                 >
                   Ajouter
                 </button>

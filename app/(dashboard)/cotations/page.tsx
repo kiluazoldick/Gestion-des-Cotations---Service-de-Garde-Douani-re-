@@ -1,25 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import toast from "react-hot-toast";
 import {
   CalendarRange,
   RefreshCw,
-  Save,
   Printer,
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
   CheckCircle,
 } from "lucide-react";
-import {
-  format,
-  startOfWeek,
-  addDays,
-  eachDayOfInterval,
-  isSameDay,
-} from "date-fns";
+import { format, startOfWeek, addDays, eachDayOfInterval } from "date-fns";
 import { fr } from "date-fns/locale";
 
 interface Agent {
@@ -62,6 +55,7 @@ export default function CotationsPage() {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
 
@@ -73,12 +67,8 @@ export default function CotationsPage() {
     const today = new Date();
     const baseDate = new Date(today);
     baseDate.setDate(today.getDate() + offset * 7);
-
     const tuesday = startOfWeek(baseDate, { weekStartsOn: 2 });
-    return eachDayOfInterval({
-      start: tuesday,
-      end: addDays(tuesday, 6),
-    });
+    return eachDayOfInterval({ start: tuesday, end: addDays(tuesday, 6) });
   };
 
   const getWeekId = (days: Date[]) => {
@@ -92,31 +82,24 @@ export default function CotationsPage() {
 
   const loadData = async () => {
     setLoading(true);
-
-    // Charger les jours de la semaine
     const days = getWeekDays(weekOffset);
     setCurrentWeek(days);
     const weekId = getWeekId(days);
     setCurrentWeekId(weekId);
 
-    // Charger les agents actifs
     const { data: agentsData } = await supabase
       .from("agents")
       .select("*")
       .eq("actif", true)
       .order("nom", { ascending: true });
-
     if (agentsData) setAgents(agentsData);
 
-    // Charger les postes
     const { data: postesData } = await supabase
       .from("postes")
       .select("*")
       .order("ordre", { ascending: true });
-
     if (postesData) setPostes(postesData);
 
-    // Charger les indisponibilités de la semaine
     const startDate = format(days[0], "yyyy-MM-dd");
     const endDate = format(days[6], "yyyy-MM-dd");
 
@@ -124,21 +107,17 @@ export default function CotationsPage() {
       .from("indisponibilites")
       .select("*")
       .or(`date_debut.lte.${endDate},date_fin.gte.${startDate}`);
-
     if (indispoData) setIndisponibilites(indispoData);
 
-    // Charger les cotations existantes pour cette semaine
     const { data: cotationsData } = await supabase
       .from("cotations")
       .select("*")
       .eq("semaine_id", weekId);
-
     if (cotationsData) {
       setCotations(cotationsData);
     } else {
       setCotations([]);
     }
-
     setLoading(false);
   };
 
@@ -164,10 +143,9 @@ export default function CotationsPage() {
 
   const getPosteForAgent = (agentId: string, date: Date): Poste | null => {
     const cotation = getAgentCotation(agentId, date);
-    if (cotation) {
-      return postes.find((p) => p.id === cotation.poste_id) || null;
-    }
-    return null;
+    return cotation
+      ? postes.find((p) => p.id === cotation.poste_id) || null
+      : null;
   };
 
   const getAgentsForPoste = (posteId: string, date: Date): Agent[] => {
@@ -178,7 +156,6 @@ export default function CotationsPage() {
       )
       .map((c) => agents.find((a) => a.id === c.agent_id))
       .filter((a) => a) as Agent[];
-
     return agentsWithPoste;
   };
 
@@ -192,14 +169,8 @@ export default function CotationsPage() {
         return;
       }
     }
-
     setGenerating(true);
-
-    // Algorithme simple de rotation
     const newCotations: Cotation[] = [];
-    const availableAgents = [...agents];
-
-    // Compter combien de fois chaque agent a été assigné
     const assignmentCount: Record<string, number> = {};
     agents.forEach((a) => {
       assignmentCount[a.id] = 0;
@@ -207,10 +178,7 @@ export default function CotationsPage() {
 
     for (const day of currentWeek) {
       const dateStr = format(day, "yyyy-MM-dd");
-
-      // Filtrer les agents disponibles ce jour
       let available = agents.filter((a) => !isAgentIndisponible(a.id, day));
-
       if (available.length === 0) {
         toast.error(
           `Aucun agent disponible pour le ${format(day, "EEEE d MMMM", { locale: fr })}`,
@@ -218,15 +186,9 @@ export default function CotationsPage() {
         setGenerating(false);
         return;
       }
-
-      // Trier par nombre d'assignations (les moins sollicités d'abord)
       available.sort((a, b) => assignmentCount[a.id] - assignmentCount[b.id]);
-
-      // Assigner chaque poste
       for (const poste of postes) {
         if (available.length === 0) break;
-
-        // Prendre l'agent le moins sollicité
         const selectedAgent = available.shift();
         if (selectedAgent) {
           newCotations.push({
@@ -241,13 +203,9 @@ export default function CotationsPage() {
       }
     }
 
-    // Sauvegarder en base
-    const { error } = await supabase.from("cotations").upsert(
-      newCotations.map((c) => ({
-        ...c,
-        semaine_id: currentWeekId,
-      })),
-    );
+    const { error } = await supabase
+      .from("cotations")
+      .upsert(newCotations.map((c) => ({ ...c, semaine_id: currentWeekId })));
 
     if (error) {
       toast.error("Erreur lors de la génération");
@@ -255,7 +213,6 @@ export default function CotationsPage() {
       toast.success("Cotation générée avec succès");
       await loadData();
     }
-
     setGenerating(false);
   };
 
@@ -266,41 +223,31 @@ export default function CotationsPage() {
   ) => {
     const dateStr = format(date, "yyyy-MM-dd");
     const existingCotation = getAgentCotation(agentId, date);
+    if (existingCotation && existingCotation.poste_id === posteId) return;
 
-    if (existingCotation && existingCotation.poste_id === posteId) {
-      return; // Même poste, rien à faire
-    }
-
-    // Vérifier si le poste est déjà pris par un autre agent ce jour
     const agentWithSamePoste = cotations.find(
       (c) =>
         c.date_jour === dateStr &&
         c.poste_id === posteId &&
         c.agent_id !== agentId,
     );
-
     if (agentWithSamePoste && !existingCotation) {
       toast.error(`Ce poste est déjà attribué à un autre agent`);
       return;
     }
 
     setSaving(true);
-
     if (existingCotation) {
-      // Modifier la cotation existante
       const { error } = await supabase
         .from("cotations")
         .update({ poste_id: posteId, modifie_manuellement: true })
         .eq("id", existingCotation.id);
-
-      if (error) {
-        toast.error("Erreur lors de la modification");
-      } else {
+      if (error) toast.error("Erreur lors de la modification");
+      else {
         toast.success("Cotation modifiée");
         await loadData();
       }
     } else {
-      // Créer une nouvelle cotation
       const { error } = await supabase.from("cotations").insert({
         id: crypto.randomUUID(),
         semaine_id: currentWeekId,
@@ -309,61 +256,117 @@ export default function CotationsPage() {
         poste_id: posteId,
         modifie_manuellement: true,
       });
-
-      if (error) {
-        toast.error("Erreur lors de l'ajout");
-      } else {
+      if (error) toast.error("Erreur lors de l'ajout");
+      else {
         toast.success("Cotation ajoutée");
         await loadData();
       }
     }
-
     setSaving(false);
   };
 
   const handlePrint = () => {
-    window.print();
+    const printContent = tableRef.current?.innerHTML;
+    const originalTitle = document.title;
+    document.title = `Cotation_${currentWeekId}`;
+    const printWindow = window.open("", "_blank");
+    if (printWindow && printContent) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Cotation ${currentWeekId}</title>
+            <style>
+              body {
+                font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+                padding: 20px;
+                margin: 0;
+              }
+              h1 {
+                font-size: 18px;
+                margin-bottom: 20px;
+                color: #111;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+              }
+              th, td {
+                border: 1px solid #e5e5e5;
+                padding: 10px 8px;
+                text-align: left;
+                vertical-align: top;
+              }
+              th {
+                background-color: #f5f5f5;
+                font-weight: 600;
+              }
+              .indisponible {
+                color: #dc2626;
+                font-size: 11px;
+              }
+              .poste-assigne {
+                font-weight: 500;
+              }
+              .footer {
+                margin-top: 20px;
+                font-size: 10px;
+                color: #999;
+                text-align: center;
+              }
+            </style>
+          </head>
+          <body>
+            ${printContent}
+            <div class="footer">Document généré par Garde Cotation - ${new Date().toLocaleDateString()}</div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+      printWindow.close();
+    }
+    document.title = originalTitle;
   };
 
-  const weekNavigation = () => {
-    return (
-      <div className="flex items-center gap-2">
+  const weekNavigation = () => (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => setWeekOffset(weekOffset - 1)}
+        className="p-2 hover:bg-gray-100 rounded-xl transition"
+      >
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+      <span className="text-sm font-medium text-gray-700">
+        {weekOffset === 0
+          ? "Semaine en cours"
+          : weekOffset < 0
+            ? `Il y a ${-weekOffset} semaine${-weekOffset > 1 ? "s" : ""}`
+            : `Dans ${weekOffset} semaine${weekOffset > 1 ? "s" : ""}`}
+      </span>
+      <button
+        onClick={() => setWeekOffset(weekOffset + 1)}
+        className="p-2 hover:bg-gray-100 rounded-xl transition"
+      >
+        <ChevronRight className="w-5 h-5" />
+      </button>
+      {weekOffset !== 0 && (
         <button
-          onClick={() => setWeekOffset(weekOffset - 1)}
-          className="p-2 hover:bg-gray-100 rounded-lg transition"
+          onClick={() => setWeekOffset(0)}
+          className="ml-2 text-sm text-gray-600 hover:text-gray-900"
         >
-          <ChevronLeft className="w-5 h-5" />
+          Aujourd'hui
         </button>
-        <span className="text-sm font-medium">
-          {weekOffset === 0
-            ? "Semaine en cours"
-            : weekOffset < 0
-              ? `Il y a ${-weekOffset} semaine${-weekOffset > 1 ? "s" : ""}`
-              : `Dans ${weekOffset} semaine${weekOffset > 1 ? "s" : ""}`}
-        </span>
-        <button
-          onClick={() => setWeekOffset(weekOffset + 1)}
-          className="p-2 hover:bg-gray-100 rounded-lg transition"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-        {weekOffset !== 0 && (
-          <button
-            onClick={() => setWeekOffset(0)}
-            className="ml-2 text-sm text-blue-600 hover:underline"
-          >
-            Aujourd'hui
-          </button>
-        )}
-      </div>
-    );
-  };
+      )}
+    </div>
+  );
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
+          <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-3" />
           <p className="text-gray-500">Chargement...</p>
         </div>
       </div>
@@ -372,10 +375,9 @@ export default function CotationsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-gray-900">
             Cotation des gardes
           </h1>
           <p className="text-gray-500 mt-1">
@@ -388,7 +390,7 @@ export default function CotationsPage() {
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center gap-2 disabled:opacity-50"
+            className="bg-gray-900 text-white px-4 py-2 rounded-xl hover:bg-gray-800 transition flex items-center gap-2 disabled:opacity-50 font-medium"
           >
             <RefreshCw
               className={`w-4 h-4 ${generating ? "animate-spin" : ""}`}
@@ -397,7 +399,7 @@ export default function CotationsPage() {
           </button>
           <button
             onClick={handlePrint}
-            className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition flex items-center gap-2"
+            className="border border-gray-200 text-gray-700 px-4 py-2 rounded-xl hover:bg-gray-50 transition flex items-center gap-2 font-medium"
           >
             <Printer className="w-4 h-4" />
             Imprimer
@@ -405,12 +407,26 @@ export default function CotationsPage() {
         </div>
       </div>
 
-      {/* Tableau de cotation */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden overflow-x-auto">
-        <table className="w-full min-w-[800px]">
+      {/* Tableau à imprimer */}
+      <div
+        ref={tableRef}
+        className="bg-white rounded-2xl border border-gray-100 overflow-x-auto shadow-sm print:shadow-none print:border-none"
+      >
+        <style jsx global>{`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            .print\\:shadow-none,
+            .print\\:border-none {
+              visibility: visible;
+            }
+          }
+        `}</style>
+        <table className="w-full min-w-[900px]">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="p-4 text-left font-semibold text-gray-600 sticky left-0 bg-gray-50">
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="p-4 text-left font-semibold text-gray-700 sticky left-0 bg-gray-50">
                 Agents / Jours
               </th>
               {currentWeek.map((day, index) => {
@@ -418,7 +434,7 @@ export default function CotationsPage() {
                 return (
                   <th key={index} className="p-4 text-center min-w-[120px]">
                     <div
-                      className={`font-semibold ${isWeekend ? "text-red-600" : "text-gray-600"}`}
+                      className={`font-semibold ${isWeekend ? "text-red-600" : "text-gray-700"}`}
                     >
                       {format(day, "EEEE", { locale: fr })}
                     </div>
@@ -435,14 +451,13 @@ export default function CotationsPage() {
               const hasAnyIndispo = currentWeek.some((day) =>
                 isAgentIndisponible(agent.id, day),
               );
-
               return (
                 <tr
                   key={agent.id}
-                  className="border-b hover:bg-gray-50 transition"
+                  className="border-b border-gray-50 hover:bg-gray-50/50 transition"
                 >
-                  <td className="p-4 sticky left-0 bg-white border-r">
-                    <div className="font-medium">
+                  <td className="p-4 sticky left-0 bg-white border-r border-gray-100">
+                    <div className="font-medium text-gray-900">
                       {agent.prenom} {agent.nom}
                     </div>
                     {hasAnyIndispo && (
@@ -455,12 +470,10 @@ export default function CotationsPage() {
                   {currentWeek.map((day, dayIndex) => {
                     const isIndisponible = isAgentIndisponible(agent.id, day);
                     const currentPoste = getPosteForAgent(agent.id, day);
-                    const isWeekend = day.getDay() === 6 || day.getDay() === 0;
-
                     return (
                       <td key={dayIndex} className="p-2 text-center">
                         {isIndisponible ? (
-                          <div className="bg-red-50 text-red-500 p-2 rounded-lg text-sm">
+                          <div className="bg-red-50 text-red-500 p-2 rounded-xl text-sm">
                             Indisponible
                           </div>
                         ) : (
@@ -474,11 +487,11 @@ export default function CotationsPage() {
                               )
                             }
                             disabled={saving}
-                            className={`w-full p-2 rounded-lg border text-sm transition ${
+                            className={`w-full p-2 rounded-xl border text-sm transition cursor-pointer ${
                               currentPoste
                                 ? "bg-green-50 border-green-200 text-green-700"
                                 : "bg-gray-50 border-gray-200 text-gray-500"
-                            } focus:ring-2 focus:ring-blue-500`}
+                            } focus:outline-none focus:ring-1 focus:ring-gray-400`}
                           >
                             <option value="">-- Aucun --</option>
                             {postes.map((poste) => {
@@ -511,8 +524,7 @@ export default function CotationsPage() {
         </table>
       </div>
 
-      {/* Légende */}
-      <div className="bg-gray-50 rounded-lg p-4 flex flex-wrap items-center gap-6">
+      <div className="bg-gray-50 rounded-xl p-4 flex flex-wrap items-center gap-6">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-green-50 border border-green-200 rounded"></div>
           <span className="text-sm text-gray-600">Poste assigné</span>
@@ -531,14 +543,13 @@ export default function CotationsPage() {
         </div>
       </div>
 
-      {/* Message si tableau vide */}
       {cotations.length === 0 && !loading && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <AlertTriangle className="w-8 h-8 text-yellow-600 mx-auto mb-3" />
-          <p className="text-yellow-800">Aucune cotation pour cette semaine</p>
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
+          <AlertTriangle className="w-8 h-8 text-amber-600 mx-auto mb-3" />
+          <p className="text-amber-800">Aucune cotation pour cette semaine</p>
           <button
             onClick={handleGenerate}
-            className="mt-3 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition"
+            className="mt-3 bg-amber-600 text-white px-4 py-2 rounded-xl hover:bg-amber-700 transition"
           >
             Générer une cotation
           </button>

@@ -4,7 +4,15 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Shield, Mail, Lock, LogIn } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  LogIn,
+  CalendarRange,
+  Users,
+  Briefcase,
+  History,
+} from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -31,76 +39,150 @@ export default function LoginPage() {
     if (data?.session) {
       toast.success("Connexion réussie");
       router.push("/");
-      router.refresh(); // Force rafraîchissement
+      router.refresh();
     }
 
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
-        <div className="flex flex-col items-center mb-8">
-          <div className="bg-blue-600 p-3 rounded-full mb-4">
-            <Shield className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex">
+      {/* Partie gauche - Formulaire */}
+      <div className="flex-1 flex items-center justify-center p-8 bg-white">
+        <div className="w-full max-w-md">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Bienvenue</h1>
+            <p className="text-gray-500 mt-2">
+              Connectez-vous pour accéder à votre espace de gestion des gardes
+            </p>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            Gestion des Gardes
-          </h1>
-          <p className="text-gray-500 mt-2">Connectez-vous à votre compte</p>
+
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Adresse email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all text-gray-900 placeholder:text-gray-400"
+                  placeholder="vous@exemple.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Mot de passe
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all text-gray-900 placeholder:text-gray-400"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-800 text-white py-2.5 rounded-xl hover:bg-blue-900 transition flex items-center justify-center gap-2 font-medium"
+            >
+              <LogIn className="w-4 h-4" />
+              {loading ? "Connexion..." : "Se connecter"}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-500 mt-6">
+            Pas encore de compte ?{" "}
+            <a
+              href="/register"
+              className="text-blue-700 font-medium hover:underline"
+            >
+              Créer un compte
+            </a>
+          </p>
         </div>
+      </div>
 
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-                placeholder="agent@example.com"
-                required
-              />
+      {/* Partie droite - Présentation */}
+      <div className="hidden lg:flex flex-1 bg-blue-50 p-12 flex-col justify-center">
+        <div className="max-w-md mx-auto">
+          <div className="mb-8">
+            <div className="w-12 h-12 bg-blue-800 rounded-2xl flex items-center justify-center mb-6">
+              <CalendarRange className="w-6 h-6 text-white" />
             </div>
+            <h2 className="text-2xl font-semibold text-gray-900">
+              Gestion des gardes simplifiée
+            </h2>
+            <p className="text-gray-600 mt-2">
+              Organisez les plannings de votre équipe en quelques clics
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mot de passe
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-                placeholder="••••••••"
-                required
-              />
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <Users className="w-4 h-4 text-blue-700" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Gestion des agents</p>
+                <p className="text-sm text-gray-500">
+                  Ajoutez, modifiez et suivez les disponibilités
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <Briefcase className="w-4 h-4 text-blue-700" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">
+                  Postes personnalisables
+                </p>
+                <p className="text-sm text-gray-500">
+                  Définissez vos propres types de garde
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <CalendarRange className="w-4 h-4 text-blue-700" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">
+                  Génération automatique
+                </p>
+                <p className="text-sm text-gray-500">
+                  Planning équitable généré en un clic
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <History className="w-4 h-4 text-blue-700" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">Historique complet</p>
+                <p className="text-sm text-gray-500">
+                  Retrouvez toutes vos cotations passées
+                </p>
+              </div>
             </div>
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center gap-2"
-          >
-            <LogIn className="w-4 h-4" />
-            {loading ? "Connexion..." : "Se connecter"}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-600 mt-6">
-          Pas encore de compte ?{" "}
-          <a href="/register" className="text-blue-600 hover:underline">
-            Créer un compte
-          </a>
-        </p>
+        </div>
       </div>
     </div>
   );

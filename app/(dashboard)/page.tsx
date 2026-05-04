@@ -8,7 +8,9 @@ import {
   CalendarCheck,
   Clock,
   TrendingUp,
-  AlertCircle,
+  Sparkles,
+  MousePointerClick,
+  FileSpreadsheet,
 } from "lucide-react";
 import { format, startOfWeek, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -75,39 +77,39 @@ export default function DashboardPage() {
       title: "Agents actifs",
       value: stats.agentsActifs,
       icon: Users,
-      color: "bg-blue-500",
+      color: "bg-blue-700",
     },
     {
       title: "Postes de garde",
       value: stats.postesCount,
       icon: Briefcase,
-      color: "bg-green-500",
+      color: "bg-green-700",
     },
     {
       title: "Cotations totales",
       value: stats.cotationsCount,
       icon: CalendarCheck,
-      color: "bg-purple-500",
+      color: "bg-blue-600",
     },
     {
       title: "Semaines historiques",
       value: stats.semainesCount,
       icon: Clock,
-      color: "bg-orange-500",
+      color: "bg-green-600",
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Tableau de bord</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
           <p className="text-gray-500 mt-1">{lastWeek}</p>
         </div>
         <a
           href="/cotations"
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+          className="bg-blue-700 text-white px-5 py-2.5 rounded-xl hover:bg-blue-800 transition flex items-center gap-2 font-medium shadow-sm"
         >
           <TrendingUp className="w-4 h-4" />
           Générer cotation
@@ -121,16 +123,16 @@ export default function DashboardPage() {
           return (
             <div
               key={index}
-              className="bg-white rounded-xl shadow-sm p-6 border border-gray-100"
+              className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-500 text-sm">{stat.title}</p>
-                  <p className="text-3xl font-bold text-gray-800 mt-1">
+                  <p className="text-3xl font-bold text-gray-900 mt-1">
                     {stat.value}
                   </p>
                 </div>
-                <div className={`${stat.color} p-3 rounded-full`}>
+                <div className={`${stat.color} p-3 rounded-xl`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
               </div>
@@ -139,60 +141,109 @@ export default function DashboardPage() {
         })}
       </div>
 
+      {/* Guide d'utilisation */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-100 bg-blue-50/30">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-semibold text-gray-900">
+              Comment utiliser l'application
+            </h2>
+          </div>
+          <p className="text-gray-500 text-sm mt-1">
+            3 étapes simples pour organiser vos gardes
+          </p>
+        </div>
+        <div className="p-6">
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-blue-700" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 mb-1">
+                  1. Configurez votre équipe
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Ajoutez les agents et définissez les postes de garde (Matin,
+                  Soir, Nuit).
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <MousePointerClick className="w-5 h-5 text-green-700" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 mb-1">
+                  2. Générez la cotation
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Cliquez sur "Générer" pour créer un planning équitable
+                  automatiquement.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <FileSpreadsheet className="w-5 h-5 text-blue-700" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 mb-1">
+                  3. Ajustez et imprimez
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Modifiez manuellement si besoin, puis imprimez ou exportez
+                  votre planning.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Actions rapides
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <a
             href="/agents"
-            className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition"
+            className="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition"
           >
-            <Users className="w-8 h-8 text-blue-600 mb-2" />
+            <Users className="w-7 h-7 text-blue-700 mb-2" />
             <span className="text-sm font-medium text-gray-700">
               Gérer agents
             </span>
           </a>
           <a
             href="/postes"
-            className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition"
+            className="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:border-green-200 hover:bg-green-50/30 transition"
           >
-            <Briefcase className="w-8 h-8 text-green-600 mb-2" />
+            <Briefcase className="w-7 h-7 text-green-700 mb-2" />
             <span className="text-sm font-medium text-gray-700">
               Configurer postes
             </span>
           </a>
           <a
             href="/cotations"
-            className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition"
+            className="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:border-blue-200 hover:bg-blue-50/30 transition"
           >
-            <CalendarCheck className="w-8 h-8 text-purple-600 mb-2" />
+            <CalendarCheck className="w-7 h-7 text-blue-700 mb-2" />
             <span className="text-sm font-medium text-gray-700">
               Voir cotation
             </span>
           </a>
           <a
             href="/historique"
-            className="flex flex-col items-center p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition"
+            className="flex flex-col items-center p-4 rounded-xl border border-gray-100 hover:border-green-200 hover:bg-green-50/30 transition"
           >
-            <Clock className="w-8 h-8 text-orange-600 mb-2" />
+            <Clock className="w-7 h-7 text-green-700 mb-2" />
             <span className="text-sm font-medium text-gray-700">
               Historique
             </span>
           </a>
-        </div>
-      </div>
-
-      {/* Info Alert */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm text-yellow-800">
-            <strong>Conseil :</strong> Les gardes sont générées automatiquement
-            du mardi au lundi. Vous pouvez modifier manuellement chaque cotation
-            après génération.
-          </p>
         </div>
       </div>
     </div>
